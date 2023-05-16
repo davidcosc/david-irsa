@@ -1,0 +1,41 @@
+:imagesdir: images/
+
+= IRSA
+
+This repository contains documentation about "IAM Roles for Service Accounts" (IRSA). +
+In short IRSA is a way to enable kubernetes to provision temporary, IAM role based aws credentials to individual pods. +
+More information on IRSA can be found https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html[here].
+
+== Benefits
+- no permanent AWS credentials
+- fine grained permissions for individual pods (least privilege, credential isolation)
+- auditability (aws cloud trail acces and event logging)
+- uses standard kubernetes features to achieve this
+- uses standard OpenID Connect protocol (OIDC) for authentication
+
+== Problems
+- scalability (is expected to be improved in the second half of 2023 with a new version of IRSA)
+
+== IRSA standards
+- kubernetes https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/[dynamic admission control] with https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/[admission controllers]
+- https://openid.net/connect/[OpenID Connect]
+- https://aws.amazon.com/de/iam/[AWS IAM]
+
+== On admission controllers
+One of the core features of IRSA is the https://github.com/aws/amazon-eks-pod-identity-webhook[Amazon EKS Pod Identity Webhook]. It is a https://kubernetes.io/blog/2019/03/21/a-guide-to-kubernetes-admission-controllers/[mutating admission controller]. +
+This means it can augment incoming pod creation requests to the API server and extend them. This happens during the *mutating addmission* phase as shown in *Figure 1* and results in the *extended pod definition* shown in *Figure 2*.
+
+.Admission Controller Phases
+image::admission-controller-phases.png[]
+
+.Extended Pod Definition
+image::extended-pod-definition.png[]
+
+== On OpenID Connect
+Kubernetes can be configured to function as a pseudo OIDC Provider. It can be configured to issue OIDC conform JWT ID tokens to pods running inside the cluster. The pod can then attempt to exchange this token with AWS for IAM access credentials +
+AWS in return can be configured to allow an identity to authenticate itself against AWS using an OIDC conform JWT ID token. Following the authentication AWS can then authorize the identity based on standard IAM access control mechanisms like roles and policies by returning temporary IAM credentials.
+
+== Overview
+
+.IRSA
+image::irsa.png[]
