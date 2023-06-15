@@ -21,6 +21,13 @@ More information on IRSA can be found https://docs.aws.amazon.com/eks/latest/use
 - https://openid.net/connect/[OpenID Connect]
 - https://aws.amazon.com/de/iam/[AWS IAM]
 
+== Overview
+
+.IRSA
+image::irsa.drawio.png[]
+
+== Generating the initial Service Account Token on the Kubernetes side
+
 == On admission controllers
 One of the core features of IRSA is the https://github.com/aws/amazon-eks-pod-identity-webhook[Amazon EKS Pod Identity Webhook]. It is a https://kubernetes.io/blog/2019/03/21/a-guide-to-kubernetes-admission-controllers/[mutating admission controller]. +
 This means it can augment incoming pod creation requests to the API server and extend them. This happens during the *mutating addmission* phase as shown in *Figure 1* and results in the *extended pod definition* shown in *Figure 2*.
@@ -34,8 +41,3 @@ image::extended-pod-definition.png[]
 == On OpenID Connect
 Kubernetes can be configured to function as a pseudo OIDC Provider. It can be configured to issue OIDC conform JWT ID tokens to pods running inside the cluster. The pod can then attempt to exchange this token with AWS for IAM access credentials +
 AWS in return can be configured to allow an identity to authenticate itself against AWS using an OIDC conform JWT ID token. Following the authentication AWS can then authorize the identity based on standard IAM access control mechanisms like roles and policies by returning temporary IAM credentials.
-
-== Overview
-
-.IRSA
-image::irsa.png[]
