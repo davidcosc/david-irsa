@@ -27,17 +27,29 @@ More information on IRSA can be found https://docs.aws.amazon.com/eks/latest/use
 image::irsa.drawio.png[]
 
 == Generating the initial Service Account Token on the Kubernetes side
+To understand how exactly the token used by the pod to request temporary credentials from aws is generated, we first have to get some basic understanding of some of the inner workings of kubernetes. 
 
-== On admission controllers
-One of the core features of IRSA is the https://github.com/aws/amazon-eks-pod-identity-webhook[Amazon EKS Pod Identity Webhook]. It is a https://kubernetes.io/blog/2019/03/21/a-guide-to-kubernetes-admission-controllers/[mutating admission controller]. +
-This means it can augment incoming pod creation requests to the API server and extend them. This happens during the *mutating addmission* phase as shown in *Figure 1* and results in the *extended pod definition* shown in *Figure 2*.
+=== Kubernetes resource creation simplified
 
-.Admission Controller Phases
-image::admission-controller-phases.png[]
+.Kubernetes Resource Creation Simplified
+image::kubernetes-resource-creation-simplified.drawio.png[]
+
+=== Pod Identity Webhook
+
+During the resource creation process shown in *Figure 2*, it is possible to manipulate the resource definition before it is stored in etcd. To understand how this works we have to look at *Step 2* in *Figure 2* more closely. +
+A resource creation request goes through several phases before the resource definition is actually stored in etcd. These phases can be seen in *Figure 3*. +
+
+.Request Phases
+image::request-phases.png[]
+
+We can use a webhook to manipulate resource definitions during the *mutating admission* phase. This is where the https://github.com/aws/amazon-eks-pod-identity-webhook[Amazon EKS Pod Identity Webhook] comes into play. +
+The pod identity webhook is a https://kubernetes.io/blog/2019/03/21/a-guide-to-kubernetes-admission-controllers/[mutating admission controller] that extends all pod definitions that contain annotations about an IAM role. An example of a pod definition that has been mutated by the webhook can be seen in *Figure 4*. +
 
 .Extended Pod Definition
 image::extended-pod-definition.png[]
 
-== On OpenID Connect
+Note that part of the extended definition seen in *Figure 4* is the so called *aws-token*. It is a special service account token that the pod can exchange for temporary aws credentials with aws sts later on. +
+
+=== Kubernetes as an OIDC Provider
 Kubernetes can be configured to function as a pseudo OIDC Provider. It can be configured to issue OIDC conform JWT ID tokens to pods running inside the cluster. The pod can then attempt to exchange this token with AWS for IAM access credentials +
 AWS in return can be configured to allow an identity to authenticate itself against AWS using an OIDC conform JWT ID token. Following the authentication AWS can then authorize the identity based on standard IAM access control mechanisms like roles and policies by returning temporary IAM credentials.
