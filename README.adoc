@@ -50,7 +50,7 @@ image::extended-pod-definition.png[]
 Note that part of the extended definition seen in *Figure 4* is the so called *aws-token*. It is a special service account token that the pod can exchange for temporary aws credentials with aws sts later on. +
 
 === Kubernetes Service Account Token Creation
-To understand service account token creation, we have to take a look at *Figure 2 Step 4* in more detail. This can be seen in *Figure 5*. +
+To understand service account token creation, we have to take a look at *Figure 2 Step 4* / *Figure 1 Step 1* in more detail. This can be seen in *Figure 5*. +
 
 .Service Account Token Creation Simplified
 image::service-account-token-creation-simplified.png[]
