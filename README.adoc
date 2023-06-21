@@ -27,7 +27,7 @@ More information on IRSA can be found https://docs.aws.amazon.com/eks/latest/use
 image::irsa.drawio.png[]
 
 == Generating the initial Service Account Token on the Kubernetes side
-To understand how exactly the token used by the pod to request temporary credentials from aws is generated, we first have to get some basic understanding of some of the inner workings of kubernetes. 
+To understand how exactly the token used by the pod to request temporary credentials from aws is generated (*Figure 1 Step 1*), we first have to get some basic understanding of some of the inner workings of kubernetes. 
 
 === Kubernetes resource creation simplified
 
@@ -35,7 +35,6 @@ To understand how exactly the token used by the pod to request temporary credent
 image::kubernetes-resource-creation-simplified.drawio.png[]
 
 === Pod Identity Webhook
-
 During the resource creation process shown in *Figure 2*, it is possible to manipulate the resource definition before it is stored in etcd. To understand how this works we have to look at *Step 2* in *Figure 2* more closely. +
 A resource creation request goes through several phases before the resource definition is actually stored in etcd. These phases can be seen in *Figure 3*. +
 
@@ -50,6 +49,23 @@ image::extended-pod-definition.png[]
 
 Note that part of the extended definition seen in *Figure 4* is the so called *aws-token*. It is a special service account token that the pod can exchange for temporary aws credentials with aws sts later on. +
 
-=== Kubernetes as an OIDC Provider
-Kubernetes can be configured to function as a pseudo OIDC Provider. It can be configured to issue OIDC conform JWT ID tokens to pods running inside the cluster. The pod can then attempt to exchange this token with AWS for IAM access credentials +
-AWS in return can be configured to allow an identity to authenticate itself against AWS using an OIDC conform JWT ID token. Following the authentication AWS can then authorize the identity based on standard IAM access control mechanisms like roles and policies by returning temporary IAM credentials.
+=== Kubernetes Service Account Token Creation
+To understand service account token creation, we have to take a look at *Figure 2 Step 4* in more detail. This can be seen in *Figure 5*. +
+
+.Service Account Token Creation Simplified
+image::service-account-token-creation-simplified.png[]
+
+=== Kubernetes, Service Account Tokens and OIDC
+Now that we understand how service account tokens are created, we can take a look at some properties of service account tokens that come in handy in respect to OIDC. +
+
+A kubernetes service account token is: +
+
+- a JSON Web Token (JWT)
+- can be configured to have OIDC conform claims like audience, issuer, subject
+- is signed with a key that can be configured when starting kubernetes
+
+== AWS Service Account Token Validation
+The documentation for the https://github.com/aws/amazon-eks-pod-identity-webhook[Amazon EKS Pod Identity Webhook] shows how to configure token signing keys as well as the OIDC discovery endpoint on the AWS side. +
+In simple terms we first generate a public/private key pair. We then configure kubernetes to use the private key for signing service account tokens. On the AWS side we configure a matching OIDC discovery endpoint using the respective public key. +
+AWS can then use the OIDC discovery endpoints public key to validate service account tokens signged with the private key and send to AWS from kubernetes pods. This happens in *Figure 1 Step 3*. +
+The validation process also includes checking, that claims of the token are valid. Expected claims can also be configured on the AWS and Kubernetes side. +
