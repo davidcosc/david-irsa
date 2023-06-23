@@ -67,5 +67,6 @@ A kubernetes service account token is: +
 == AWS Service Account Token Validation
 The documentation for the https://github.com/aws/amazon-eks-pod-identity-webhook[Amazon EKS Pod Identity Webhook] shows how to configure token signing keys as well as the OIDC discovery endpoint on the AWS side. +
 In simple terms we first generate a public/private key pair. We then configure kubernetes to use the private key for signing service account tokens. On the AWS side we configure a matching OIDC discovery endpoint using the respective public key. +
-AWS can then use the OIDC discovery endpoints public key to validate service account tokens signged with the private key and send to AWS from kubernetes pods. This happens in *Figure 1 Step 3*. +
-The validation process also includes checking, that claims of the token are valid. Expected claims can also be configured on the AWS and Kubernetes side. +
+AWS can then use the OIDC discovery endpoints public key to validate respective service account tokens send to AWS by kubernetes pods. This happens in *Figure 1 Step 3*. +
+If the signature validation is successfull, AWS then attempts to validate the claims contained inside the token. +
+Validation is done by checking, that the tokens claims match the expected claims configured for the IAM Role and webidentity. +
